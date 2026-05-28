@@ -35,7 +35,7 @@ hermes plugins install https://github.com/xuyang-liu16/hermes-code-bridge --enab
 然后在 Hermes 里这样问：
 
 ```text
-/code-bridge Use Codex to review my current diff. Read-only. Focus on bugs, security risks, and missing tests.
+/code-bridge 用 Codex 审查我当前的 diff。只读，不要改文件。重点看 bug、安全风险和缺失的测试。
 ```
 
 只想安装 skill 文件也可以：
@@ -76,37 +76,37 @@ Hermes Code Bridge 让 Hermes 来做这个 router。
 ### 🧪 实现 + review 闭环
 
 ```text
-Use Codex to implement the smallest fix for this failing test. Then use Claude Code as a read-only reviewer. Report both agents' evidence.
+用 Codex 为这个失败测试实现最小修复。然后用 Claude Code 做只读 review。最后汇报两个 agent 的证据。
 ```
 
 ### 🔍 合并前找另一个 agent 复查
 
 ```text
-Use a different local coding agent to review my latest diff. Do not edit files. Look for correctness bugs, security issues, and test gaps.
+用另一个本地 coding agent 审查我最新的 diff。不要改文件。重点找正确性 bug、安全问题和测试缺口。
 ```
 
 ### 🧭 把任务交给最适合的模型
 
 ```text
-Use Kimi Code for long-context repo understanding. Ask it where this feature should live and what files are likely affected. Read-only.
+用 Kimi Code 做长上下文 repo 理解。让它判断这个功能应该放在哪里、可能影响哪些文件。只读。
 ```
 
 ### ♻️ 继续已有 coding-agent session
 
 ```text
-Continue the existing Codex session for this project. Do not start a new session unless no matching session exists.
+继续这个项目已有的 Codex session。除非找不到匹配 session，否则不要新开。
 ```
 
 ### 🧱 协调多 agent 本地工作区
 
 ```text
-Use one local agent to implement and another to review. If both need to edit files, use separate worktrees and confirm the plan first.
+用一个本地 agent 实现改动，再用另一个 agent review。如果两个 agent 都需要改文件，先使用独立 worktree，并在派发前确认计划。
 ```
 
 ### 📦 把模糊需求变成结构化任务
 
 ```text
-Use OpenCode to inspect this repo and produce a concrete implementation plan. Include success criteria and the exact tests to run.
+用 OpenCode 检查这个 repo，并产出一份具体实现计划。计划里要包含成功标准和需要运行的测试命令。
 ```
 
 ---
@@ -178,7 +178,7 @@ Hermes Code Bridge 对安全和证据很严格：
 ### Plugin command
 
 ```text
-/code-bridge Use Kimi Code to implement the smallest change that fixes this bug. Reuse the existing project session if available, do not refactor unrelated files, run relevant tests, and report evidence.
+/code-bridge 用 Kimi Code 实现能修复这个 bug 的最小改动。如果已有项目 session，就复用它；不要重构无关文件；运行相关测试，并汇报证据。
 ```
 
 ### Plain skill
@@ -198,19 +198,19 @@ hermes -s hermes-code-bridge
 ## 🧪 更多 prompt 示例
 
 ```text
-Use Codex to reproduce this bug, identify the root cause, and propose the smallest patch. Do not edit files until the plan is clear.
+用 Codex 复现这个 bug，定位根因，并提出最小 patch。计划明确前不要改文件。
 ```
 
 ```text
-Use Claude Code to review the latest diff. Read-only. Separate blockers from nice-to-haves. Include file paths and line-level evidence.
+用 Claude Code review 最新 diff。只读。把阻塞问题和可选改进分开写，并提供文件路径和行级证据。
 ```
 
 ```text
-Use Kimi Code to read the whole repo context and explain why this test is flaky. If it needs to run commands, ask before running anything destructive.
+用 Kimi Code 阅读整个 repo 上下文，解释这个测试为什么 flaky。如果需要运行命令，遇到破坏性操作前先确认。
 ```
 
 ```text
-Use OpenCode to inspect the project structure and recommend where a new API endpoint should be implemented. No file edits.
+用 OpenCode 检查项目结构，并建议新的 API endpoint 应该实现在哪些位置。不要改文件。
 ```
 
 ---
