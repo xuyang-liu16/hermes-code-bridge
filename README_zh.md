@@ -3,9 +3,17 @@
 # Hermes Code Bridge
 
 <p>
-  <img src="https://img.shields.io/badge/Hermes-Skill-6C5CE7?style=for-the-badge" alt="Hermes Skill">
-  <img src="https://img.shields.io/badge/CLI-Coding%20Agents-2F9E44?style=for-the-badge" alt="CLI Coding Agents">
-  <img src="https://img.shields.io/badge/Codex%20%7C%20Kimi%20Code%20%7C%20Claude%20Code%20%7C%20OpenCode-blue?style=for-the-badge" alt="Supported CLIs">
+  <img src="https://img.shields.io/badge/Hermes-Plugin%20%2B%20Skill-6C5CE7?style=for-the-badge" alt="Hermes Plugin + Skill">
+  <img src="https://img.shields.io/badge/Local-CLI%20Coding%20Agents-2F9E44?style=for-the-badge" alt="Local CLI Coding Agents">
+  <img src="https://img.shields.io/badge/Codex%20%7C%20Kimi%20Code%20%7C%20Claude%20Code%20%7C%20OpenCode%20%7C%20Gemini-blue?style=for-the-badge" alt="Supported CLIs">
+</p>
+
+<p>
+  <a href="#一行安装">安装</a> ·
+  <a href="#它能做什么">它能做什么</a> ·
+  <a href="#怎么用">怎么用</a> ·
+  <a href="#plugin-和-skill-的区别">Plugin vs Skill</a> ·
+  <a href="README.md">English</a>
 </p>
 
 [English](README.md) | **中文**
@@ -16,22 +24,44 @@
 
 ---
 
-## Hermes Code Bridge 是什么？
+## 一行安装
 
-Hermes Code Bridge 是一个可复用的 [Hermes Agent](https://github.com/NousResearch/hermes-agent) skill，用来把 Hermes 连接到本地终端里的代码智能体，例如 Codex、Kimi Code、Claude Code、OpenCode、Gemini CLI，以及其他 terminal-based coding assistants。
+作为 Hermes plugin 安装：
+
+```bash
+hermes plugins install https://github.com/ImSingee/hermes-code-bridge --enable
+```
+
+然后在 Hermes 里使用：
+
+```text
+/code-bridge Use Codex to do a read-only review of the current repository diff.
+```
+
+plugin 会注册 `/code-bridge`，它会告诉 Hermes 针对当前请求加载并遵循 plugin 内置的 `hermes-code-bridge:hermes-code-bridge` skill。
+
+如果你只想安装 skill 文件，不需要 plugin wrapper：
+
+```bash
+hermes skills install https://raw.githubusercontent.com/ImSingee/hermes-code-bridge/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
+```
+
+## 它能做什么
+
+Hermes Code Bridge 用来把 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 连接到本地终端里的代码智能体，例如 Codex、Kimi Code、Claude Code、OpenCode、Gemini CLI，以及其他 terminal-based coding assistants。
 
 它让 Hermes 学会：
 
 - 发现本机已安装的 coding CLI；
-- 选择正确的后端、项目目录和工作方式；
-- 尽量复用已有 CLI agent session，而不是无意义地新开 session；
-- 生成带有约束、成功标准和汇报格式的结构化派活 prompt；
+- 选择正确的后端、项目目录和 session；
+- 尽量复用已有 CLI-agent session，而不是无意义地新开；
+- 生成带有角色、任务、约束、成功标准和汇报格式的结构化派活 prompt；
 - 调用真实的本地 CLI，而不是用 Hermes 自己冒充；
-- 监控后台任务；
+- 通过 terminal、tmux 或 process logs 监控后台任务；
 - 收集原始输出、产物、diff 和验证结果；
-- 清楚汇报实际发生了什么、验证是否通过、还有哪些风险。
+- 清楚汇报实际发生了什么、什么通过了、什么失败了、还有哪些风险。
 
-核心流程很简单：
+核心桥接流程：
 
 ```text
 用户请求
@@ -44,11 +74,11 @@ Hermes 是协调者；本地 coding CLIs 是执行后端。
 
 ## 为什么需要它？
 
-很多开发者会同时使用多个代码智能体：一个适合实现，一个适合 review，一个适合 debug 或长上下文调研。如果没有统一工作流，很容易丢 session 上下文、发出模糊 prompt、忘记验证，甚至把某个 agent 的工作错误地说成另一个 agent 做的。
+很多开发者会同时使用多个代码智能体：一个适合实现，一个适合 review，一个适合 debug，另一个适合长上下文调研。如果没有统一工作流，很容易丢 session 上下文、发出模糊 prompt、忘记验证，甚至把某个 agent 的工作错误地说成另一个 agent 做的。
 
 Hermes Code Bridge 提供了一套更稳的桥接工作流：
 
-| 需求 | skill 提供什么 |
+| 需求 | Hermes Code Bridge 提供什么 |
 | --- | --- |
 | 真实本地执行 | 用户要求哪个 CLI，Hermes 就必须真的调用哪个 CLI。 |
 | 复用 session | 优先使用已有项目/session 上下文，而不是随便新开。 |
@@ -73,16 +103,17 @@ skill 内包含这些工具的命令模式和安全说明：
 
 命令示例故意写成 pattern，因为各个 CLI 的参数会随版本变化。实际使用时，Hermes 仍然应该在必要时运行 `<command> --help` 检查当前版本。
 
-## 安装方式
+## 怎么用
 
-### 方式一：复制 skill 到 Hermes skills 目录
+### 通过 plugin slash command 加载
 
-```bash
-mkdir -p ~/.hermes/skills/autonomous-ai-agents/hermes-code-bridge
-cp skills/hermes-code-bridge/SKILL.md ~/.hermes/skills/autonomous-ai-agents/hermes-code-bridge/SKILL.md
+```text
+/code-bridge Use Kimi Code to implement the smallest change that fixes this bug. Reuse the existing project session if available, do not refactor unrelated files, run relevant tests, and report evidence.
 ```
 
-然后开启新的 Hermes session，并加载 skill：
+plugin 会注册 `/code-bridge`，它会告诉 Hermes 针对当前请求加载并遵循 `hermes-code-bridge` skill。
+
+### 作为普通 skill 加载
 
 ```text
 /skill hermes-code-bridge
@@ -94,66 +125,42 @@ cp skills/hermes-code-bridge/SKILL.md ~/.hermes/skills/autonomous-ai-agents/herm
 hermes -s hermes-code-bridge
 ```
 
-### 方式二：通过 raw URL 安装
+### 示例 prompt
 
-如果你的 Hermes 版本支持从 raw URL 安装 skill：
-
-```bash
-hermes skills install https://raw.githubusercontent.com/<OWNER>/<REPO>/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
-```
-
-把 `<OWNER>/<REPO>` 替换成你的仓库路径即可。
-
-## 快速开始
-
-你可以这样对 Hermes 说：
+让 Codex 做只读 review：
 
 ```text
 Use Codex to do a read-only review of the current repository diff. Do not modify files. Report correctness, security, and maintainability risks with evidence.
 ```
 
-Hermes 应该按桥接流程执行：
-
-1. 加载 `hermes-code-bridge`；
-2. 检查 Codex 是否已安装；
-3. 确认当前项目目录；
-4. 选择已有 session 或 one-shot run；
-5. 把结构化 prompt 发给真实 Codex CLI；
-6. 检查输出和仓库状态；
-7. 汇报命令、结果、证据和风险。
-
-示例派活命令模式：
-
-```bash
-cd <PROJECT_DIR>
-codex exec "Read-only review: inspect the current git diff and identify correctness, security, and maintainability risks. Do not modify files. Report file paths, line references when possible, severity, and recommended fixes."
-```
-
-## 示例 prompt
-
-### 让 Kimi Code 做一个小范围实现
-
-```text
-Use Kimi Code to implement the smallest change that satisfies this bug fix. Reuse the existing project session if available. Do not refactor unrelated files. Run the relevant tests and report files changed, commands run, and remaining risks.
-```
-
-### 让 Claude Code 做只读 review
+让 Claude Code 做只读 review：
 
 ```text
 Use Claude Code as a read-only reviewer for the latest diff. Do not modify files. List blockers, non-blockers, test gaps, and exact evidence from the diff.
 ```
 
-### 让 OpenCode 检查项目结构
+让 OpenCode 检查项目结构：
 
 ```text
 Use OpenCode to inspect this repository structure and suggest where a new feature should be implemented. Read-only only; do not create or edit files.
 ```
 
-### 协调一个实现 agent 和一个 review agent
+协调一个实现 agent 和一个 review agent：
 
 ```text
 Use one local coding agent to implement the change and a different one to review it. Confirm the backend/session plan before dispatch. Use separate worktrees if both agents need to edit files.
 ```
+
+## Plugin 和 Skill 的区别
+
+这个仓库同时提供两种形态：
+
+| 模式 | 路径 | 适合什么场景 |
+| --- | --- | --- |
+| Plugin wrapper | `plugin.yaml`, `__init__.py` | 通过 `hermes plugins install ... --enable` 从 GitHub 一键安装；额外提供 `/code-bridge` 命令。 |
+| Plain skill | `skills/hermes-code-bridge/SKILL.md` | 只想安装 skill 文档，并通过 `/skill hermes-code-bridge` 使用的用户。 |
+
+plugin 本身故意保持轻量。真正的工作流都在 `SKILL.md` 里，所以两种方式都能用。
 
 ## 安全模型
 
@@ -170,7 +177,7 @@ Hermes Code Bridge 对“归因”和“证据”要求很严格：
 
 Hermes Code Bridge 不是完整多 agent workspace 工具的替代品。
 
-CCB（`claude_codex_bridge`）这类工具提供可见的 tmux workspace、配置好的 agent panes、sidebar、worktrees 和 agent 之间的通信路由。Hermes Code Bridge 更轻量：它只是一个 Hermes skill，让 Hermes 能驱动本地已经安装好的 coding CLIs。
+CCB（`claude_codex_bridge`）这类工具提供可见的 tmux workspace、配置好的 agent panes、sidebar、worktrees 和 agent 之间的通信路由。Hermes Code Bridge 更轻量：它只是一个 Hermes skill/plugin，让 Hermes 能驱动本地已经安装好的 coding CLIs。
 
 二者可以一起用。如果安装了 CCB，Hermes 可以把 CCB 当作另一个 bridge backend：读取 CCB 配置、attach 到 workspace、给正确 pane 发送 prompt，并捕获输出。
 
@@ -181,6 +188,9 @@ hermes-code-bridge/
   README.md
   README_zh.md
   LICENSE
+  plugin.yaml
+  __init__.py
+  after-install.md
   skills/
     hermes-code-bridge/
       SKILL.md

@@ -1,0 +1,8 @@
+manifest_version: 1
+name: hermes-code-bridge
+version: "1.0.0"
+description: "Hermes plugin wrapper for the hermes-code-bridge skill. Registers /code-bridge so users can load the skill workflow from any Hermes session, and ships SKILL.md for direct skill installation."
+author: "Hermes Code Bridge contributors"
+kind: standalone
+provides_commands:
+  - code-bridge
