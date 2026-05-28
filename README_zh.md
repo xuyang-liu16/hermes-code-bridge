@@ -9,6 +9,7 @@
 </p>
 
 <p>
+  <a href="#-咖啡时间-demo">咖啡 demo</a> ·
   <a href="#-10-秒安装">安装</a> ·
   <a href="#-你可以让它做什么">使用场景</a> ·
   <a href="#-工作原理">工作原理</a> ·
@@ -20,9 +21,23 @@
 
 ### 把 Hermes Agent 变成 Codex、Kimi Code、Claude Code、OpenCode、Gemini CLI 等本地代码智能体的指挥塔。
 
-不用再在一堆终端之间复制 prompt。你告诉 Hermes 想做什么，Hermes 负责选择合适的本地 coding agent，派发结构化任务，监控运行过程，并带着证据回来汇报。
+不用再在一堆终端之间复制 prompt。你给 Hermes 一个要求，它可以把任务路由给 Codex、Kimi Code、Claude Code、OpenCode 或 Gemini CLI，再带着命令、diff、测试、产物和风险回来汇报。
 
 </div>
+
+---
+
+## ☕ 咖啡时间 demo
+
+想象一下：你下楼买杯咖啡。出门前，你只对 Hermes 说一句：
+
+```text
+/code-bridge 用 Codex 跑一下这个实验，再让 Claude Code review 一遍结果。等我回来时，把命令、改动文件、测试结果、失败点和剩余风险整理给我。
+```
+
+等你拿着咖啡回来，Hermes 已经在本地协调好了 coding agents：一个负责跑实验，一个负责复查，Hermes 负责监控过程、收集证据，而不是让你回来后翻一堆 terminal 日志。
+
+这就是 Hermes Code Bridge 的核心价值：大约 10 秒安装，让 Hermes 具备指挥本地 coding agents 的能力。
 
 ---
 
@@ -36,6 +51,12 @@ hermes plugins install https://github.com/xuyang-liu16/hermes-code-bridge --enab
 
 ```text
 /code-bridge 用 Codex 审查我当前的 diff。只读，不要改文件。重点看 bug、安全风险和缺失的测试。
+```
+
+也可以直接试试“咖啡时间工作流”：
+
+```text
+/code-bridge 用 Kimi Code 理解这个 repo，让 Codex 实现最小修复，再让 Claude Code review diff。最后汇报证据、测试和风险。
 ```
 
 只想安装 skill 文件也可以：

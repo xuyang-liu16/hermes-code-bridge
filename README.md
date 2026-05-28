@@ -9,6 +9,7 @@
 </p>
 
 <p>
+  <a href="#-coffee-break-demo">Coffee demo</a> ·
   <a href="#-install-in-10-seconds">Install</a> ·
   <a href="#-what-you-can-ask-it-to-do">Use cases</a> ·
   <a href="#-how-it-works">How it works</a> ·
@@ -20,9 +21,23 @@
 
 ### Turn Hermes Agent into a command center for Codex, Kimi Code, Claude Code, OpenCode, Gemini CLI, and other local coding agents.
 
-Stop copy-pasting prompts between terminals. Tell Hermes what you want. Hermes chooses the right local coding agent, sends a structured task, monitors the run, and reports back with evidence.
+Stop copy-pasting prompts between terminals. Give Hermes one request; it can route the work to Codex, Kimi Code, Claude Code, OpenCode, or Gemini CLI, then come back with commands, diffs, tests, artifacts, and risks.
 
 </div>
+
+---
+
+## ☕ Coffee break demo
+
+Imagine this: you are stepping out to buy coffee. Before you leave, you tell Hermes:
+
+```text
+/code-bridge Use Codex to run the experiment, then ask Claude Code to review the result. When I get back, summarize the commands, changed files, test results, failures, and remaining risks.
+```
+
+You come back with your coffee. Hermes has already coordinated the local coding agents: one ran the experiment, another reviewed it, and Hermes collected the evidence instead of leaving you to dig through terminal scrollback.
+
+That is the point of Hermes Code Bridge: give Hermes the skill to command your local coding agents in about 10 seconds.
 
 ---
 
@@ -36,6 +51,12 @@ Then ask Hermes:
 
 ```text
 /code-bridge Use Codex to review my current diff. Read-only. Focus on bugs, security risks, and missing tests.
+```
+
+Or try the coffee-break workflow:
+
+```text
+/code-bridge Use Kimi Code to understand this repo, ask Codex to implement the smallest fix, then ask Claude Code to review the diff. Report evidence, tests, and risks.
 ```
 
 Prefer installing only the skill?
