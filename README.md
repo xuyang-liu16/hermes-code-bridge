@@ -29,7 +29,7 @@ Use Hermes Agent as the control plane for local coding agents.
 Install it as a Hermes plugin:
 
 ```bash
-hermes plugins install https://github.com/ImSingee/hermes-code-bridge --enable
+hermes plugins install https://github.com/xuyang-liu16/hermes-code-bridge --enable
 ```
 
 Then use it inside Hermes:
@@ -43,7 +43,7 @@ The plugin registers `/code-bridge`, which tells Hermes to load and follow the p
 If you only want the skill file without the plugin wrapper:
 
 ```bash
-hermes skills install https://raw.githubusercontent.com/ImSingee/hermes-code-bridge/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
+hermes skills install https://raw.githubusercontent.com/xuyang-liu16/hermes-code-bridge/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
 ```
 
 ## What it does

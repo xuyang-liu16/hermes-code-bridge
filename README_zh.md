@@ -29,7 +29,7 @@
 作为 Hermes plugin 安装：
 
 ```bash
-hermes plugins install https://github.com/ImSingee/hermes-code-bridge --enable
+hermes plugins install https://github.com/xuyang-liu16/hermes-code-bridge --enable
 ```
 
 然后在 Hermes 里使用：
@@ -43,7 +43,7 @@ plugin 会注册 `/code-bridge`，它会告诉 Hermes 针对当前请求加载�
 如果你只想安装 skill 文件，不需要 plugin wrapper：
 
 ```bash
-hermes skills install https://raw.githubusercontent.com/ImSingee/hermes-code-bridge/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
+hermes skills install https://raw.githubusercontent.com/xuyang-liu16/hermes-code-bridge/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
 ```
 
 ## 它能做什么
