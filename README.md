@@ -1,6 +1,6 @@
 <div align="center">
 
-# Hermes Code Bridge
+# 🌉 Hermes Code Bridge
 
 <p>
   <img src="https://img.shields.io/badge/Hermes-Plugin%20%2B%20Skill-6C5CE7?style=for-the-badge" alt="Hermes Plugin + Skill">
@@ -9,179 +9,234 @@
 </p>
 
 <p>
-  <a href="#one-line-install">Install</a> ·
-  <a href="#what-it-does">What it does</a> ·
-  <a href="#usage">Usage</a> ·
-  <a href="#plugin-vs-skill">Plugin vs Skill</a> ·
+  <a href="#-install-in-10-seconds">Install</a> ·
+  <a href="#-what-you-can-ask-it-to-do">Use cases</a> ·
+  <a href="#-how-it-works">How it works</a> ·
+  <a href="#-usage">Usage</a> ·
   <a href="README_zh.md">中文</a>
 </p>
 
 **English** | [中文](README_zh.md)
 
-Use Hermes Agent as the control plane for local coding agents.
+### Turn Hermes Agent into a command center for Codex, Kimi Code, Claude Code, OpenCode, Gemini CLI, and other local coding agents.
+
+Stop copy-pasting prompts between terminals. Tell Hermes what you want. Hermes chooses the right local coding agent, sends a structured task, monitors the run, and reports back with evidence.
 
 </div>
 
 ---
 
-## One-line install
-
-Install it as a Hermes plugin:
+## 🚀 Install in 10 seconds
 
 ```bash
 hermes plugins install https://github.com/xuyang-liu16/hermes-code-bridge --enable
 ```
 
-Then use it inside Hermes:
+Then ask Hermes:
 
 ```text
-/code-bridge Use Codex to do a read-only review of the current repository diff.
+/code-bridge Use Codex to review my current diff. Read-only. Focus on bugs, security risks, and missing tests.
 ```
 
-The plugin registers `/code-bridge`, which tells Hermes to load and follow the plugin-provided `hermes-code-bridge:hermes-code-bridge` skill for the request.
-
-If you only want the skill file without the plugin wrapper:
+Prefer installing only the skill?
 
 ```bash
 hermes skills install https://raw.githubusercontent.com/xuyang-liu16/hermes-code-bridge/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
 ```
 
-## What it does
+---
 
-Hermes Code Bridge connects [Hermes Agent](https://github.com/NousResearch/hermes-agent) to local terminal-based coding agents such as Codex, Kimi Code, Claude Code, OpenCode, Gemini CLI, and other coding CLIs.
+## 🔥 Why people want this
 
-It teaches Hermes how to:
+AI coding is no longer one assistant in one chat window. Real work often looks like this:
 
-- discover installed coding CLIs;
-- choose the right backend, working directory, and session;
-- reuse existing CLI-agent sessions instead of creating unnecessary new ones;
-- write structured dispatch prompts with role, task, constraints, success criteria, and report format;
-- run the real local CLI, not a fake substitute;
-- monitor background execution through terminal, tmux, or process logs;
-- collect raw evidence, artifacts, diffs, and verification results;
-- report what happened, what passed, what failed, and what remains risky.
+- Codex is already deep inside a repo session.
+- Claude Code is better suited for a careful review pass.
+- Kimi Code has the long context needed for a messy codebase.
+- OpenCode is the local tool you use for project navigation.
+- Gemini CLI is handy for quick inspection.
 
-The bridge pattern:
+Without a bridge, you become the router: copy prompts, remember which terminal had which context, check whether an agent actually ran tests, and paste summaries back into your main assistant.
+
+Hermes Code Bridge makes Hermes the router.
 
 ```text
-User request
-  -> Hermes plans and routes the task
-  -> Codex / Kimi Code / Claude Code / OpenCode executes it locally
-  -> Hermes monitors, verifies, and reports evidence
+You
+  -> Hermes: "Fix this bug with Kimi Code, then ask Claude Code to review it."
+  -> Hermes checks tools, repo, session, and safety constraints
+  -> Hermes dispatches the right local CLI agents
+  -> Hermes monitors output and artifacts
+  -> Hermes reports: commands, files changed, tests run, failures, risks
 ```
 
-Hermes is the coordinator. Your local coding CLIs are the execution backends.
+---
 
-## Why use it?
+## 💡 What you can ask it to do
 
-Modern developers often use several coding agents at once. One tool might be better for implementation, another for review, another for debugging, and another for long-context research. Without a workflow, it is easy to lose session context, send vague prompts, forget verification, or accidentally pretend that one agent did work that another agent actually did.
+### 🧪 Run implementation + review loops
 
-Hermes Code Bridge gives Hermes a disciplined bridge workflow:
+```text
+Use Codex to implement the smallest fix for this failing test. Then use Claude Code as a read-only reviewer. Report both agents' evidence.
+```
 
-| Need | What Hermes Code Bridge provides |
+### 🔍 Get a second opinion before merging
+
+```text
+Use a different local coding agent to review my latest diff. Do not edit files. Look for correctness bugs, security issues, and test gaps.
+```
+
+### 🧭 Send the right task to the right model
+
+```text
+Use Kimi Code for long-context repo understanding. Ask it where this feature should live and what files are likely affected. Read-only.
+```
+
+### ♻️ Resume an existing coding-agent session
+
+```text
+Continue the existing Codex session for this project. Do not start a new session unless no matching session exists.
+```
+
+### 🧱 Coordinate multi-agent local workspaces
+
+```text
+Use one local agent to implement and another to review. If both need to edit files, use separate worktrees and confirm the plan first.
+```
+
+### 📦 Turn vague requests into structured agent tasks
+
+```text
+Use OpenCode to inspect this repo and produce a concrete implementation plan. Include success criteria and the exact tests to run.
+```
+
+---
+
+## 🧠 What it teaches Hermes
+
+Hermes Code Bridge gives Hermes a disciplined workflow for local coding agents:
+
+- 🔎 discover installed CLIs and check their help output when needed;
+- 🧭 choose backend, working directory, and session intentionally;
+- ♻️ reuse existing sessions instead of throwing away context;
+- 📝 dispatch prompts with role, background, task, constraints, success criteria, and report format;
+- 🖥️ run the real requested CLI, not a fake substitute;
+- ⏱️ monitor long-running jobs through terminal, tmux, or process logs;
+- 📦 collect raw output, diffs, artifacts, and verification results;
+- ✅ report what actually happened, including failures and uncertainty.
+
+---
+
+## 🧩 Supported backends
+
+| Backend | Good for |
 | --- | --- |
-| Real local execution | Hermes must call the actual requested CLI. |
-| Session reuse | Prefer existing project/session context over fresh throwaway runs. |
-| Safe dispatch | Confirm ambiguous or side-effectful tasks before sending. |
-| Better prompts | Include role, background, task, constraints, success criteria, and report format. |
-| Monitoring | Track long-running agent jobs through terminal/tmux/process output. |
-| Evidence | Report exact command, output excerpt, changed files, artifacts, and verification. |
-| Privacy | Keep public workflows free of private paths, session IDs, secrets, and project names. |
+| 🧩 Codex | implementation, debugging, focused repo changes |
+| 🌙 Kimi Code | long-context codebase understanding and Chinese/English mixed workflows |
+| 🟣 Claude Code | careful code review, refactoring plans, reasoning-heavy debugging |
+| 🛠️ OpenCode | local project navigation and terminal-first coding workflows |
+| ✨ Gemini CLI | quick inspection, lightweight review, repo Q&A |
+| 🪟 tmux sessions | persistent multi-pane local agent workspaces |
+| 🧱 CCB / other bridges | visible multi-agent workspaces with panes, worktrees, and routing |
 
-## Supported backends
+The skill uses command patterns rather than hard-coded assumptions. CLI flags change; Hermes should verify `<command> --help` for the installed version.
 
-The skill includes command patterns and safety notes for:
+---
 
-- Codex
-- Kimi Code
-- Claude Code
-- OpenCode
-- Gemini CLI
-- generic terminal-based coding assistants
-- tmux-based interactive sessions
-- optional multi-agent workspace tools such as CCB (`claude_codex_bridge`)
+## ⚙️ How it works
 
-The command recipes are intentionally written as patterns because CLI flags change over time. Hermes should still check `<command> --help` when using a new version.
+```text
+1. Understand the request
+2. Identify the requested backend or choose one if the user allows it
+3. Inspect repo/session context
+4. Confirm risky actions before dispatch
+5. Build a structured prompt for the coding agent
+6. Run the local CLI or attach to the existing tmux/session
+7. Monitor until completion or blockage
+8. Verify artifacts, diffs, and tests
+9. Report evidence back to the user
+```
 
-## Usage
+This is intentionally not "just spawn another LLM." The point is attribution: if the user asks for Codex, Hermes runs Codex. If the user asks for Claude Code, Hermes runs Claude Code.
 
-### Load by plugin slash command
+---
+
+## 🛡️ Safety model
+
+Hermes Code Bridge is strict about safety and evidence:
+
+- 🧾 report the exact command or session used;
+- 🔐 never leak secrets, private paths, real session IDs, or project names in public docs;
+- 🛑 do not bypass sandbox or approval prompts unless the user explicitly accepts the risk;
+- 🚫 do not edit coding-agent databases, transcripts, or hidden session internals;
+- 🧪 verify tests and artifacts before saying a task succeeded;
+- 🧯 say "blocked" when blocked instead of inventing a successful result.
+
+---
+
+## 📌 Usage
+
+### Plugin command
 
 ```text
 /code-bridge Use Kimi Code to implement the smallest change that fixes this bug. Reuse the existing project session if available, do not refactor unrelated files, run relevant tests, and report evidence.
 ```
 
-The plugin registers `/code-bridge`, which tells Hermes to load and follow the `hermes-code-bridge` skill for the request.
-
-### Load as a normal skill
+### Plain skill
 
 ```text
 /skill hermes-code-bridge
 ```
 
-or start Hermes with it preloaded:
+or start Hermes with the skill preloaded:
 
 ```bash
 hermes -s hermes-code-bridge
 ```
 
-### Example prompts
+---
 
-Ask Codex for a read-only review:
-
-```text
-Use Codex to do a read-only review of the current repository diff. Do not modify files. Report correctness, security, and maintainability risks with evidence.
-```
-
-Ask Claude Code to review a change:
+## 🧪 More prompt examples
 
 ```text
-Use Claude Code as a read-only reviewer for the latest diff. Do not modify files. List blockers, non-blockers, test gaps, and exact evidence from the diff.
+Use Codex to reproduce this bug, identify the root cause, and propose the smallest patch. Do not edit files until the plan is clear.
 ```
-
-Ask OpenCode to inspect a project:
 
 ```text
-Use OpenCode to inspect this repository structure and suggest where a new feature should be implemented. Read-only only; do not create or edit files.
+Use Claude Code to review the latest diff. Read-only. Separate blockers from nice-to-haves. Include file paths and line-level evidence.
 ```
-
-Coordinate implementation and review:
 
 ```text
-Use one local coding agent to implement the change and a different one to review it. Confirm the backend/session plan before dispatch. Use separate worktrees if both agents need to edit files.
+Use Kimi Code to read the whole repo context and explain why this test is flaky. If it needs to run commands, ask before running anything destructive.
 ```
 
-## Plugin vs Skill
+```text
+Use OpenCode to inspect the project structure and recommend where a new API endpoint should be implemented. No file edits.
+```
 
-This repository ships both:
+---
+
+## 🧩 Plugin vs Skill
 
 | Mode | Path | Best for |
 | --- | --- | --- |
-| Plugin wrapper | `plugin.yaml`, `__init__.py` | Easy GitHub install via `hermes plugins install ... --enable`; adds `/code-bridge`. |
-| Plain skill | `skills/hermes-code-bridge/SKILL.md` | Users who only want the skill document and prefer `/skill hermes-code-bridge`. |
+| 🔌 Plugin wrapper | `plugin.yaml`, `__init__.py` | One-line install from GitHub; adds `/code-bridge`. |
+| 📄 Plain skill | `skills/hermes-code-bridge/SKILL.md` | Users who only want the reusable workflow document. |
 
-The plugin is intentionally lightweight. The real workflow lives in `SKILL.md`, so users can install it either way.
+The plugin stays lightweight. The real workflow lives in `SKILL.md`, so people can install it either way.
 
-## Safety model
+---
 
-Hermes Code Bridge is strict about attribution and evidence:
+## 🧱 Works with CCB and tmux workspaces
 
-- If the user asks for Codex, Hermes should run Codex.
-- If the user asks for Kimi Code, Hermes should run Kimi Code.
-- Hermes should not use a Hermes subagent or Python script and pretend it was a different local coding CLI.
-- Hermes should not edit coding-agent session databases or internal history files.
-- Hermes should not bypass sandbox or approval prompts unless the user explicitly accepts that risk.
-- Hermes should verify artifacts and test results before reporting success.
+Hermes Code Bridge does not replace full multi-agent workspace tools.
 
-## Relationship to CCB and tmux workspaces
+Tools such as CCB (`claude_codex_bridge`) provide visible tmux panes, configured agent slots, worktrees, sidebars, and inter-agent communication. Hermes Code Bridge is lighter: it tells Hermes how to drive whatever local coding CLIs are already installed.
 
-Hermes Code Bridge is not a replacement for full multi-agent workspace tools.
+If CCB is available, Hermes can treat it as another bridge backend: inspect the CCB config, attach to the workspace, send prompts to the right pane, and capture output.
 
-Tools such as CCB (`claude_codex_bridge`) provide visible tmux workspaces, configured agent panes, sidebars, worktrees, and inter-agent communication routes. Hermes Code Bridge is lighter: it is a Hermes skill/plugin that helps Hermes drive whatever local coding CLIs are already installed.
+---
 
-They can work together. If CCB is installed, Hermes can treat it as another bridge backend: inspect the CCB config, attach to the workspace, send prompts to the correct pane, and capture output.
-
-## Repository layout
+## 📁 Repository layout
 
 ```text
 hermes-code-bridge/
@@ -196,18 +251,22 @@ hermes-code-bridge/
       SKILL.md
 ```
 
-## Privacy
+---
 
-This repository is designed to be public. The skill uses placeholders such as `<PROJECT_DIR>`, `<SESSION_ID>`, `<PROMPT>`, and `<TEST_COMMAND>` instead of personal paths, private project names, real session IDs, or credentials.
+## 🔐 Privacy
 
-Before publishing your own fork, run a privacy scan:
+This repo is designed to be public. It uses placeholders such as `<PROJECT_DIR>`, `<SESSION_ID>`, `<PROMPT>`, and `<TEST_COMMAND>` instead of personal paths, private project names, real session IDs, or credentials.
+
+Before publishing a fork, run:
 
 ```bash
 grep -RInE "(/Users/|/home/|API_KEY|TOKEN|SECRET|PRIVATE|@)" . 2>/dev/null || true
 ```
 
-Review any matches manually. Some placeholders may be intentional; real secrets or personal data should be removed.
+Review matches manually. Placeholders may be intentional; real secrets should not be there.
 
-## License
+---
+
+## 📜 License
 
 MIT

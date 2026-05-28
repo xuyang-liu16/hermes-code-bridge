@@ -1,6 +1,6 @@
 <div align="center">
 
-# Hermes Code Bridge
+# 🌉 Hermes Code Bridge
 
 <p>
   <img src="https://img.shields.io/badge/Hermes-Plugin%20%2B%20Skill-6C5CE7?style=for-the-badge" alt="Hermes Plugin + Skill">
@@ -9,179 +9,234 @@
 </p>
 
 <p>
-  <a href="#一行安装">安装</a> ·
-  <a href="#它能做什么">它能做什么</a> ·
-  <a href="#怎么用">怎么用</a> ·
-  <a href="#plugin-和-skill-的区别">Plugin vs Skill</a> ·
+  <a href="#-10-秒安装">安装</a> ·
+  <a href="#-你可以让它做什么">使用场景</a> ·
+  <a href="#-工作原理">工作原理</a> ·
+  <a href="#-使用方式">使用方式</a> ·
   <a href="README.md">English</a>
 </p>
 
 [English](README.md) | **中文**
 
-把 Hermes Agent 变成本地代码智能体的控制层。
+### 把 Hermes Agent 变成 Codex、Kimi Code、Claude Code、OpenCode、Gemini CLI 等本地代码智能体的指挥塔。
+
+不用再在一堆终端之间复制 prompt。你告诉 Hermes 想做什么，Hermes 负责选择合适的本地 coding agent，派发结构化任务，监控运行过程，并带着证据回来汇报。
 
 </div>
 
 ---
 
-## 一行安装
-
-作为 Hermes plugin 安装：
+## 🚀 10 秒安装
 
 ```bash
 hermes plugins install https://github.com/xuyang-liu16/hermes-code-bridge --enable
 ```
 
-然后在 Hermes 里使用：
+然后在 Hermes 里这样问：
 
 ```text
-/code-bridge Use Codex to do a read-only review of the current repository diff.
+/code-bridge Use Codex to review my current diff. Read-only. Focus on bugs, security risks, and missing tests.
 ```
 
-plugin 会注册 `/code-bridge`，它会告诉 Hermes 针对当前请求加载并遵循 plugin 内置的 `hermes-code-bridge:hermes-code-bridge` skill。
-
-如果你只想安装 skill 文件，不需要 plugin wrapper：
+只想安装 skill 文件也可以：
 
 ```bash
 hermes skills install https://raw.githubusercontent.com/xuyang-liu16/hermes-code-bridge/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
 ```
 
-## 它能做什么
+---
 
-Hermes Code Bridge 用来把 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 连接到本地终端里的代码智能体，例如 Codex、Kimi Code、Claude Code、OpenCode、Gemini CLI，以及其他 terminal-based coding assistants。
+## 🔥 为什么大家会需要它？
 
-它让 Hermes 学会：
+AI coding 现在已经不是“一个助手，一个聊天窗口”的形态了。真实工作流经常长这样：
 
-- 发现本机已安装的 coding CLI；
-- 选择正确的后端、项目目录和 session；
-- 尽量复用已有 CLI-agent session，而不是无意义地新开；
-- 生成带有角色、任务、约束、成功标准和汇报格式的结构化派活 prompt；
-- 调用真实的本地 CLI，而不是用 Hermes 自己冒充；
-- 通过 terminal、tmux 或 process logs 监控后台任务；
-- 收集原始输出、产物、diff 和验证结果；
-- 清楚汇报实际发生了什么、什么通过了、什么失败了、还有哪些风险。
+- Codex 已经在某个 repo session 里跑得很深；
+- Claude Code 更适合做一轮仔细 review；
+- Kimi Code 更适合吃长上下文、读复杂项目；
+- OpenCode 是你本地常用的项目导航和 coding 工具；
+- Gemini CLI 适合做轻量检查和快速问答。
 
-核心桥接流程：
+没有 bridge 的时候，你自己就变成了 router：复制 prompt、记住哪个 terminal 里有什么上下文、检查 agent 有没有真的跑测试、再把结果粘回主助手。
+
+Hermes Code Bridge 让 Hermes 来做这个 router。
 
 ```text
-用户请求
-  -> Hermes 规划并路由任务
-  -> Codex / Kimi Code / Claude Code / OpenCode 在本地执行
-  -> Hermes 监控、验证并汇报证据
+你
+  -> Hermes: "用 Kimi Code 修这个 bug，再让 Claude Code review 一遍。"
+  -> Hermes 检查工具、仓库、session 和安全约束
+  -> Hermes 派发给正确的本地 CLI agent
+  -> Hermes 监控输出和产物
+  -> Hermes 汇报：命令、改动文件、测试、失败点、风险
 ```
 
-Hermes 是协调者；本地 coding CLIs 是执行后端。
+---
 
-## 为什么需要它？
+## 💡 你可以让它做什么
 
-很多开发者会同时使用多个代码智能体：一个适合实现，一个适合 review，一个适合 debug，另一个适合长上下文调研。如果没有统一工作流，很容易丢 session 上下文、发出模糊 prompt、忘记验证，甚至把某个 agent 的工作错误地说成另一个 agent 做的。
+### 🧪 实现 + review 闭环
 
-Hermes Code Bridge 提供了一套更稳的桥接工作流：
+```text
+Use Codex to implement the smallest fix for this failing test. Then use Claude Code as a read-only reviewer. Report both agents' evidence.
+```
 
-| 需求 | Hermes Code Bridge 提供什么 |
+### 🔍 合并前找另一个 agent 复查
+
+```text
+Use a different local coding agent to review my latest diff. Do not edit files. Look for correctness bugs, security issues, and test gaps.
+```
+
+### 🧭 把任务交给最适合的模型
+
+```text
+Use Kimi Code for long-context repo understanding. Ask it where this feature should live and what files are likely affected. Read-only.
+```
+
+### ♻️ 继续已有 coding-agent session
+
+```text
+Continue the existing Codex session for this project. Do not start a new session unless no matching session exists.
+```
+
+### 🧱 协调多 agent 本地工作区
+
+```text
+Use one local agent to implement and another to review. If both need to edit files, use separate worktrees and confirm the plan first.
+```
+
+### 📦 把模糊需求变成结构化任务
+
+```text
+Use OpenCode to inspect this repo and produce a concrete implementation plan. Include success criteria and the exact tests to run.
+```
+
+---
+
+## 🧠 它教会 Hermes 什么？
+
+Hermes Code Bridge 给 Hermes 一套更稳的本地 coding-agent 工作流：
+
+- 🔎 发现已安装的 CLIs，并在必要时检查 help 输出；
+- 🧭 有意识地选择 backend、工作目录和 session；
+- ♻️ 复用已有 session，不浪费上下文；
+- 📝 生成带角色、背景、任务、约束、成功标准和汇报格式的 prompt；
+- 🖥️ 真的调用用户指定的 CLI，不用别的工具冒充；
+- ⏱️ 通过 terminal、tmux 或 process logs 监控长任务；
+- 📦 收集原始输出、diff、产物和验证结果；
+- ✅ 汇报实际发生了什么，包括失败和不确定性。
+
+---
+
+## 🧩 支持哪些后端？
+
+| 后端 | 适合什么 |
 | --- | --- |
-| 真实本地执行 | 用户要求哪个 CLI，Hermes 就必须真的调用哪个 CLI。 |
-| 复用 session | 优先使用已有项目/session 上下文，而不是随便新开。 |
-| 安全派活 | 对有歧义或有副作用的任务，先确认再发送。 |
-| 更好的 prompt | 包含角色、背景、任务、约束、成功标准和汇报格式。 |
-| 过程监控 | 通过 terminal/tmux/process 输出追踪长任务。 |
-| 可验证证据 | 汇报实际命令、输出片段、改动文件、产物和验证结果。 |
-| 隐私保护 | 开源材料不包含私人路径、session ID、密钥或私有项目名。 |
+| 🧩 Codex | 实现、debug、聚焦的 repo 改动 |
+| 🌙 Kimi Code | 长上下文代码理解，中英文混合工作流 |
+| 🟣 Claude Code | 细致 code review、重构计划、复杂 debug 推理 |
+| 🛠️ OpenCode | 本地项目导航，terminal-first coding 工作流 |
+| ✨ Gemini CLI | 快速检查、轻量 review、repo Q&A |
+| 🪟 tmux sessions | 持久化多 pane 本地 agent 工作区 |
+| 🧱 CCB / 其他 bridge | 带 panes、worktrees 和路由能力的可视化多 agent 工作区 |
 
-## 支持哪些后端？
+skill 使用的是命令模式，而不是写死某个版本的参数。CLI flags 会变，Hermes 应该针对当前安装版本检查 `<command> --help`。
 
-skill 内包含这些工具的命令模式和安全说明：
+---
 
-- Codex
-- Kimi Code
-- Claude Code
-- OpenCode
-- Gemini CLI
-- 通用 terminal-based coding assistants
-- 基于 tmux 的交互式 session
-- 可选的多 agent workspace 工具，例如 CCB（`claude_codex_bridge`）
+## ⚙️ 工作原理
 
-命令示例故意写成 pattern，因为各个 CLI 的参数会随版本变化。实际使用时，Hermes 仍然应该在必要时运行 `<command> --help` 检查当前版本。
+```text
+1. 理解用户请求
+2. 识别用户指定的 backend，或在用户允许时选择一个
+3. 检查 repo / session 上下文
+4. 对高风险动作先确认再派发
+5. 为 coding agent 构造结构化 prompt
+6. 调用本地 CLI，或 attach 到已有 tmux/session
+7. 监控直到完成或阻塞
+8. 验证产物、diff 和测试
+9. 带证据向用户汇报
+```
 
-## 怎么用
+它不是“随便再起一个 LLM”。核心是归因：用户要 Codex，Hermes 就运行 Codex；用户要 Claude Code，Hermes 就运行 Claude Code。
 
-### 通过 plugin slash command 加载
+---
+
+## 🛡️ 安全模型
+
+Hermes Code Bridge 对安全和证据很严格：
+
+- 🧾 汇报实际使用的命令或 session；
+- 🔐 公开文档不泄露 secrets、私人路径、真实 session ID 或私有项目名；
+- 🛑 不在用户未明确接受风险时绕过 sandbox 或 approval prompts；
+- 🚫 不编辑 coding-agent 的数据库、transcript 或隐藏 session 内部文件；
+- 🧪 说任务成功前先验证测试和产物；
+- 🧯 阻塞就说阻塞，不编造成功结果。
+
+---
+
+## 📌 使用方式
+
+### Plugin command
 
 ```text
 /code-bridge Use Kimi Code to implement the smallest change that fixes this bug. Reuse the existing project session if available, do not refactor unrelated files, run relevant tests, and report evidence.
 ```
 
-plugin 会注册 `/code-bridge`，它会告诉 Hermes 针对当前请求加载并遵循 `hermes-code-bridge` skill。
-
-### 作为普通 skill 加载
+### Plain skill
 
 ```text
 /skill hermes-code-bridge
 ```
 
-也可以启动 Hermes 时预加载：
+或者启动 Hermes 时预加载：
 
 ```bash
 hermes -s hermes-code-bridge
 ```
 
-### 示例 prompt
+---
 
-让 Codex 做只读 review：
-
-```text
-Use Codex to do a read-only review of the current repository diff. Do not modify files. Report correctness, security, and maintainability risks with evidence.
-```
-
-让 Claude Code 做只读 review：
+## 🧪 更多 prompt 示例
 
 ```text
-Use Claude Code as a read-only reviewer for the latest diff. Do not modify files. List blockers, non-blockers, test gaps, and exact evidence from the diff.
+Use Codex to reproduce this bug, identify the root cause, and propose the smallest patch. Do not edit files until the plan is clear.
 ```
-
-让 OpenCode 检查项目结构：
 
 ```text
-Use OpenCode to inspect this repository structure and suggest where a new feature should be implemented. Read-only only; do not create or edit files.
+Use Claude Code to review the latest diff. Read-only. Separate blockers from nice-to-haves. Include file paths and line-level evidence.
 ```
-
-协调一个实现 agent 和一个 review agent：
 
 ```text
-Use one local coding agent to implement the change and a different one to review it. Confirm the backend/session plan before dispatch. Use separate worktrees if both agents need to edit files.
+Use Kimi Code to read the whole repo context and explain why this test is flaky. If it needs to run commands, ask before running anything destructive.
 ```
 
-## Plugin 和 Skill 的区别
+```text
+Use OpenCode to inspect the project structure and recommend where a new API endpoint should be implemented. No file edits.
+```
 
-这个仓库同时提供两种形态：
+---
 
-| 模式 | 路径 | 适合什么场景 |
+## 🧩 Plugin 和 Skill 的区别
+
+| 模式 | 路径 | 适合什么 |
 | --- | --- | --- |
-| Plugin wrapper | `plugin.yaml`, `__init__.py` | 通过 `hermes plugins install ... --enable` 从 GitHub 一键安装；额外提供 `/code-bridge` 命令。 |
-| Plain skill | `skills/hermes-code-bridge/SKILL.md` | 只想安装 skill 文档，并通过 `/skill hermes-code-bridge` 使用的用户。 |
+| 🔌 Plugin wrapper | `plugin.yaml`, `__init__.py` | 从 GitHub 一行安装；提供 `/code-bridge` 命令。 |
+| 📄 Plain skill | `skills/hermes-code-bridge/SKILL.md` | 只想要可复用工作流文档的用户。 |
 
-plugin 本身故意保持轻量。真正的工作流都在 `SKILL.md` 里，所以两种方式都能用。
+plugin 保持轻量。真正的工作流在 `SKILL.md` 里，所以两种方式都能用。
 
-## 安全模型
+---
 
-Hermes Code Bridge 对“归因”和“证据”要求很严格：
+## 🧱 可以配合 CCB 和 tmux workspace
 
-- 用户要求 Codex，Hermes 就应该真的运行 Codex。
-- 用户要求 Kimi Code，Hermes 就应该真的运行 Kimi Code。
-- Hermes 不能用自己的 subagent 或 Python 脚本冒充其他本地 coding CLI。
-- Hermes 不应该编辑 coding agent 的 session 数据库或内部历史文件。
-- Hermes 不应该在用户未确认的情况下绕过 sandbox 或 approval prompts。
-- Hermes 汇报成功前应该验证产物和测试结果。
+Hermes Code Bridge 不替代完整的多 agent workspace 工具。
 
-## 和 CCB / tmux workspace 的关系
+CCB（`claude_codex_bridge`）这类工具提供可见的 tmux panes、配置好的 agent slots、worktrees、sidebar 和 agent 间通信。Hermes Code Bridge 更轻量：它告诉 Hermes 怎么驱动本地已经安装好的 coding CLIs。
 
-Hermes Code Bridge 不是完整多 agent workspace 工具的替代品。
+如果 CCB 可用，Hermes 可以把它当成另一个 bridge backend：读取 CCB config、attach 到 workspace、给正确 pane 发送 prompt，并捕获输出。
 
-CCB（`claude_codex_bridge`）这类工具提供可见的 tmux workspace、配置好的 agent panes、sidebar、worktrees 和 agent 之间的通信路由。Hermes Code Bridge 更轻量：它只是一个 Hermes skill/plugin，让 Hermes 能驱动本地已经安装好的 coding CLIs。
+---
 
-二者可以一起用。如果安装了 CCB，Hermes 可以把 CCB 当作另一个 bridge backend：读取 CCB 配置、attach 到 workspace、给正确 pane 发送 prompt，并捕获输出。
-
-## 仓库结构
+## 📁 仓库结构
 
 ```text
 hermes-code-bridge/
@@ -196,18 +251,22 @@ hermes-code-bridge/
       SKILL.md
 ```
 
-## 隐私
+---
 
-这个仓库设计成可以公开发布。skill 使用 `<PROJECT_DIR>`、`<SESSION_ID>`、`<PROMPT>`、`<TEST_COMMAND>` 等占位符，不包含私人路径、私有项目名、真实 session ID 或密钥。
+## 🔐 隐私
 
-发布你自己的 fork 前，可以跑一下隐私扫描：
+这个 repo 设计成可以公开发布。它使用 `<PROJECT_DIR>`、`<SESSION_ID>`、`<PROMPT>`、`<TEST_COMMAND>` 等占位符，不包含私人路径、私有项目名、真实 session ID 或 credentials。
+
+发布 fork 前可以跑：
 
 ```bash
 grep -RInE "(/Users/|/home/|API_KEY|TOKEN|SECRET|PRIVATE|@)" . 2>/dev/null || true
 ```
 
-对命中结果做人工检查。有些占位符可能是故意保留的；真正的密钥或个人信息应该删除。
+人工检查命中结果。有些占位符是有意保留的；真实密钥不应该出现在这里。
 
-## License
+---
+
+## 📜 License
 
 MIT
