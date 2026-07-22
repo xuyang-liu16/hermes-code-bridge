@@ -13,6 +13,7 @@
   <a href="#-install-in-10-seconds">Install</a> ·
   <a href="#-what-you-can-ask-it-to-do">Use cases</a> ·
   <a href="#-how-it-works">How it works</a> ·
+  <a href="#-why-it-stays-reliable">Reliability</a> ·
   <a href="#-usage">Usage</a> ·
   <a href="README_zh.md">中文</a>
 </p>
@@ -145,6 +146,14 @@ Hermes Code Bridge gives Hermes a disciplined workflow for local coding agents:
 - 📦 collect raw output, diffs, artifacts, and verification results;
 - ✅ report what actually happened, including failures and uncertainty.
 
+## ✅ Why it stays reliable
+
+- **Session-first routing:** match the repo working directory, full session ID or thread name, role, and history together. `--last` only means the most recent session; it is not the default answer. If no reliable match exists, use a one-shot run.
+- **Evidence ladder:** treat a worker's final message as a lead. Verify real artifacts, `git diff` and `git status`, and original test output. For remote side effects, read back the remote URL, ID, or state.
+- **No idle orchestration:** after dispatch, Hermes can inspect repository constraints and other independent evidence in parallel. It must not edit the same working tree as a worker.
+- **Tracked long runs:** use a traceable background process and completion notification when available. Check early startup failures, final output, and exit code. Exit code `0` alone does not prove the requested work finished.
+- **Honest closure:** report unfinished work, completed portions, blockers, and the next step. Never fill gaps with a plausible-looking result.
+
 ---
 
 ## 🧩 Supported backends
@@ -166,15 +175,11 @@ The skill uses command patterns rather than hard-coded assumptions. CLI flags ch
 ## ⚙️ How it works
 
 ```text
-1. Understand the request
-2. Identify the requested backend or choose one if the user allows it
-3. Inspect repo/session context
-4. Confirm risky actions before dispatch
-5. Build a structured prompt for the coding agent
-6. Run the local CLI or attach to the existing tmux/session
-7. Monitor until completion or blockage
-8. Verify artifacts, diffs, and tests
-9. Report evidence back to the user
+1. Understand the request, identify the backend, and select a reliable session by repo cwd, full session ID or thread name, role, and history
+2. Confirm risky actions, build a structured prompt, and dispatch the real local CLI or an intentional one-shot run
+3. While the worker runs, Hermes performs non-conflicting repo inspection, constraint checks, and evidence collection
+4. Verify artifacts, `git diff` / `git status`, original command or test output, and remote read-back state when relevant
+5. Report evidence, unfinished items, blockers, and the next step
 ```
 
 This is intentionally not "just spawn another LLM." The point is attribution: if the user asks for Codex, Hermes runs Codex. If the user asks for Claude Code, Hermes runs Claude Code.
@@ -254,6 +259,8 @@ Hermes Code Bridge does not replace full multi-agent workspace tools.
 Tools such as CCB (`claude_codex_bridge`) provide visible tmux panes, configured agent slots, worktrees, sidebars, and inter-agent communication. Hermes Code Bridge is lighter: it tells Hermes how to drive whatever local coding CLIs are already installed.
 
 If CCB is available, Hermes can treat it as another bridge backend: inspect the CCB config, attach to the workspace, send prompts to the right pane, and capture output.
+
+By default, Hermes stays outside CCB as the orchestrator: it invokes or attaches to the CCB workspace, sends work to the selected pane or agent, and reads the resulting output. Installing this repository does not automatically make Hermes the CCB `main-agent`, and it does not ship a built-in CCB adapter; use CCB's installed commands and workspace contract.
 
 ---
 

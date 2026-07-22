@@ -16,5 +16,5 @@ Use it inside Hermes:
 If you prefer direct skill installation instead of the plugin wrapper:
 
 ```bash
-hermes skills install https://raw.githubusercontent.com/<OWNER>/hermes-code-bridge/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
+hermes skills install https://raw.githubusercontent.com/xuyang-liu16/hermes-code-bridge/main/skills/hermes-code-bridge/SKILL.md --name hermes-code-bridge
 ```

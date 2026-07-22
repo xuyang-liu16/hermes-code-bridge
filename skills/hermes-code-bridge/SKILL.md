@@ -1,7 +1,7 @@
 ---
 name: hermes-code-bridge
-description: "Use when connecting Hermes Agent to local coding CLIs such as Codex, Kimi Code, Claude Code, OpenCode, Gemini CLI, or other terminal-based coding assistants. Provides a general bridge workflow for discovering agents, reusing sessions, dispatching prompts, monitoring execution, collecting evidence, and reporting results without pretending Hermes did the delegated work."
-version: 1.0.0
+description: "Use when connecting Hermes Agent to local coding CLIs such as Codex, Kimi Code, Claude Code, OpenCode, Gemini CLI, or other terminal-based coding assistants. Provides session-first routing, tracked dispatch, evidence-based verification, and honest reporting without pretending Hermes did delegated work."
+version: 1.1.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -54,15 +54,19 @@ Do not use this skill when:
 
 1. **Use the real CLI.** If the user asks for Codex, run Codex. If the user asks for Kimi Code, run Kimi Code. Do not use `delegate_task`, `execute_code`, or a Hermes subagent and claim that a different tool did the work.
 
-2. **Preserve session ownership.** Existing coding-agent sessions contain context, decisions, tool history, and project assumptions. Reuse the correct session whenever possible. Do not create a new session just because it is easier.
+2. **Route session-first.** Existing coding-agent sessions contain context, decisions, tool history, and project assumptions. Reuse a session only after jointly matching the repository working directory, full session ID or thread name, role, and relevant history. Do not treat `--last` or another recent-session shortcut as the default correct answer. If no reliable match exists, use an intentional one-shot run instead of pretending to resume.
 
-3. **Hermes coordinates; workers execute.** Hermes can inspect, route, prompt, monitor, and summarize. The local coding CLI should own the actual code edits or experiment actions when the user requested that tool.
+3. **Hermes coordinates; workers execute.** Hermes can inspect, route, prompt, monitor, verify, and summarize. While a worker runs, Hermes should continue non-conflicting repository inspection, constraint checks, and evidence collection. Hermes must not edit the same working tree concurrently with a worker.
 
 4. **Confirm before dispatch when side effects matter.** If the task may edit files, run expensive jobs, change git state, call external APIs, or resume an ambiguous session, show the chosen agent/session and prompt draft before sending it.
 
-5. **Report evidence, not vibes.** Final reports should include the actual CLI invoked, working directory, session id when relevant, output summary, artifacts produced, verification checks, and any failure or uncertainty.
+5. **Use an evidence ladder.** A worker final message or self-report is only a lead. Before success, verify real artifacts, `git diff` and `git status`, and original command or test output. For remote side effects, also read back the remote URL, ID, or state.
 
-6. **Keep it general and private.** Public skills must not contain personal paths, private project names, private session IDs, credentials, private endpoints, or organization-specific assumptions.
+6. **Track bounded long runs.** Use a traceable background process and completion notification when the host provides one. Check startup failure, final output, and exit code. Exit code `0` alone is not proof that the requested work completed.
+
+7. **Report blockers honestly.** If work is incomplete, state what completed, what did not, why it is blocked, and the next concrete step. Do not invent output that merely looks plausible.
+
+8. **Keep it general and private.** Public skills must not contain personal paths, private project names, private session IDs, credentials, private endpoints, or organization-specific assumptions.
 
 ## Architecture Model
 
@@ -174,15 +178,15 @@ For read-only inspection or tiny status checks, it is usually acceptable to proc
 
 ## Session Selection Protocol
 
-When multiple sessions exist, choose the session by role and project, not by recency alone.
+When multiple sessions exist, use session-first routing. A session is reusable only when the available evidence gives a reliable match. Do not choose it by recency alone.
 
-Recommended matching signals:
+Match these signals together, in this order:
 
 1. Current project directory or repository root.
-2. Session title or first user prompt.
-3. Recent conversation summary or archive content.
-4. Files or artifacts the session has touched.
-5. User-provided session name, id, or role.
+2. User-provided full session ID or thread name, when available.
+3. Session title, first user prompt, or declared role.
+4. Recent conversation summary or archive content that matches the requested work.
+5. Files or artifacts the session has touched, when that evidence is available.
 
 Common session roles:
 
@@ -196,7 +200,12 @@ Common session roles:
 | `data` / `experiments` | Dataset processing, experiment runs, result aggregation. |
 | `docs` / `writer` | README, docs, release notes, design docs. |
 
-If no session fits, ask whether to create a new one or run a one-shot command. Do not silently create a new long-lived session when the user's workflow depends on existing session memory.
+Selection rules:
+
+- A full session ID or thread name is stronger than a display label or a recent-session shortcut.
+- A matching project alone is insufficient when several sessions exist for that project. Use role and history to disambiguate.
+- `--last` means only "the most recent session." Do not use it as the session-first default.
+- If the signals conflict or no reliable match exists, explain the ambiguity and use a one-shot run when the user allows it. Do not silently create or misrepresent a persistent session.
 
 ## Dispatch Prompt Template
 
@@ -288,8 +297,8 @@ codex exec --ask-for-approval never "<PROMPT>"
 # Run from a project directory if supported
 codex exec -C <PROJECT_DIR> "<PROMPT>"
 
-# Resume an explicit session if supported
-codex exec resume <SESSION_ID> "<PROMPT>"
+# Resume an explicit session or thread name if supported
+codex exec resume <SESSION_ID_OR_THREAD_NAME> "<PROMPT>"
 
 # JSON output for easier parsing if supported
 codex exec --json -o <OUTPUT_JSONL> "<PROMPT>"
@@ -297,7 +306,8 @@ codex exec --json -o <OUTPUT_JSONL> "<PROMPT>"
 
 Automation notes:
 
-- Prefer explicit session IDs over interactive pickers.
+- Prefer an explicit full session ID or thread name that reliably matches the repo, role, and history.
+- Treat `--last`, where the installed CLI provides it, as a recent-session shortcut only. It is not the session-first default.
 - Prefer non-interactive `exec` modes for Hermes terminal calls.
 - If the CLI refuses due to repository trust or git checks, stop and report the exact error unless the user has already approved bypassing that guard.
 - Use background execution for long tasks and monitor with Hermes process tools.
@@ -432,13 +442,23 @@ process(action="wait", session_id="<HERMES_PROCESS_ID>", timeout=180)
 Monitoring checklist:
 
 - Poll soon after start to catch immediate authentication or syntax failures.
+- Record the process or job ID, working directory, start command, and output location so the run can be recovered and audited.
+- Request completion notification when the host environment supports it. Do not silently lose a detached task.
+- While the worker runs, Hermes should inspect independent repository facts, constraints, and verification targets. Do not wait idly, and do not edit the worker's working tree.
 - For long jobs, report progress only when there is meaningful new output.
 - If stuck at an interactive prompt, either answer only if the user already approved the choice, or ask the user.
+- At the end, inspect final output, exit code, and expected artifacts. Exit code `0` is necessary evidence, not sufficient evidence of task completion.
 - If the process fails, capture exit code and stderr. Do not hide failures behind a summary.
 
 ## Evidence Collection
 
-Collect evidence before reporting success.
+Collect evidence before reporting success. Follow this ladder in order; do not let a worker self-report skip later checks.
+
+1. **Worker report:** capture the final message or self-report as a lead, including claimed files, tests, artifacts, and remote actions.
+2. **Real artifacts:** verify each claimed file, generated output, screenshot, benchmark result, or other local artifact exists and is relevant.
+3. **Repository state:** inspect `git status`, `git diff`, and relevant paths to confirm the actual working-tree changes.
+4. **Original verification output:** run or inspect the raw output of tests, lint, build, benchmark, or other requested commands. Do not rely only on a worker summary.
+5. **Remote read-back:** when a task has remote side effects, read back the remote URL, ID, or state through the relevant service or CLI before claiming success.
 
 Minimum evidence:
 
@@ -448,6 +468,7 @@ Minimum evidence:
 - Final CLI output or a concise excerpt from raw output.
 - Changed files or created artifacts, if any.
 - Verification commands and results.
+- Remote read-back result when remote state was changed.
 
 Useful commands:
 
@@ -466,6 +487,7 @@ file <ARTIFACT_PATH>
 ```
 
 If the coding CLI claims it created a file, verify the file exists. If it claims tests passed, inspect the actual test command output. If the output is truncated, say so.
+If it claims a remote action completed, read back the relevant remote state. If a required rung is unavailable, report the result as unverified or incomplete.
 
 ## Reporting Template
 
@@ -487,8 +509,13 @@ Evidence:
 <short raw output excerpt>
 ```
 
-Risks / blockers:
-- <Anything unresolved, failed, ambiguous, or not verified>
+Incomplete / blocked:
+- <What did not complete>
+- <What completed so far>
+- <Blocking reason and next concrete step>
+
+Risks:
+- <Anything unresolved, ambiguous, or not verified>
 ````
 
 For user-facing summaries, keep the report concise, but do not omit failure state or verification gaps.
@@ -502,6 +529,8 @@ Never do these:
 - Do not directly edit the coding agent's session database, JSONL history, or internal state files.
 - Do not modify project files directly when the user explicitly asked a coding CLI to own the work, unless the user separately authorizes Hermes to edit files.
 - Do not create a new persistent session when an existing relevant session should be reused.
+- Do not use a recent-session shortcut as proof that the chosen session matches the request.
+- Do not edit the same working tree while a dispatched worker may edit it. Use a separate worktree or wait for the worker to finish.
 - Do not bypass sandbox, approval, git safety, or destructive-command prompts unless the user approved that risk.
 - Do not paste secrets, private endpoints, personal paths, or private project names into a public skill or shareable prompt.
 
@@ -564,17 +593,17 @@ Use Hermes Code Bridge when the user wants:
 - Evidence-based reports back through Hermes.
 - A portable pattern that works even without a full workspace manager.
 
-If CCB is installed, Hermes can treat `ccb` as another bridge backend: inspect `.ccb/ccb.config`, start or attach the workspace, send prompts to the appropriate pane/agent, and capture output. Do not rewrite CCB configuration unless the user asked for that.
+If CCB is installed, Hermes can treat `ccb` as another bridge backend: inspect `.ccb/ccb.config`, start or attach the workspace, send prompts to the appropriate pane/agent, and capture output. By default Hermes remains an external orchestrator; this skill does not automatically make Hermes the CCB `main-agent` and does not ship a built-in CCB adapter. Follow the installed CCB command and workspace contract, and do not rewrite CCB configuration unless the user asked for that.
 
 ## Common Pitfalls
 
 1. **Confusing Hermes with the worker.** Hermes may be capable of doing the task, but if the user requested Codex/Kimi/Claude/OpenCode, run that real tool.
 
-2. **Using the wrong session.** Recent is not always correct. Match by project, role, title, and history.
+2. **Using the wrong session.** Recent is not always correct. Match by repository cwd, full session ID or thread name, role, and history. `--last` is not a session-first default.
 
-3. **Trusting summaries without evidence.** Agent-maintained notes may be stale. Check actual terminal output, git diff, files, or test logs.
+3. **Trusting summaries without evidence.** A worker final message is a lead, not completion proof. Verify artifacts, repository state, original verification output, and remote state when applicable.
 
-4. **Losing output from long jobs.** Run bounded long jobs in the background with process tracking or redirect JSON/text output to a file.
+4. **Idling or losing long jobs.** Run bounded long jobs in the background with process tracking and completion notification when available. Inspect independent facts while they run, then check startup failure, final output, and exit code.
 
 5. **Interactive picker in non-TTY.** Many CLIs fail when an interactive session picker runs without a terminal. Use explicit session IDs or tmux/PTY.
 
@@ -584,20 +613,25 @@ If CCB is installed, Hermes can treat `ccb` as another bridge backend: inspect `
 
 8. **Publishing private workflow details.** A reusable public skill should not include one user's project map, collaborators, filesystem paths, private endpoints, or real session IDs.
 
+9. **Hiding an incomplete result.** Do not turn missing artifacts, failed verification, or an ambiguous session into a confident success summary. State the completed portion, blocker, and next step.
+
 ## Verification Checklist
 
 Before reporting completion:
 
 - [ ] The requested backend was actually executed.
 - [ ] The working directory was correct.
-- [ ] The selected session was correct or the run was intentionally one-shot.
+- [ ] The selected session reliably matched repo cwd, full session ID or thread name, role, and history, or the run was intentionally one-shot.
 - [ ] The prompt contained role, task, constraints, success criteria, and output requirements.
 - [ ] Side-effectful dispatch was confirmed by the user when needed.
-- [ ] Background process status and exit code were checked.
-- [ ] Raw output or output file was inspected.
+- [ ] Background process startup, status, completion notification when available, final output, and exit code were checked.
+- [ ] Hermes performed only non-conflicting work while the worker ran and did not edit the same working tree.
+- [ ] Worker final output was treated as a lead and raw output or output file was inspected.
 - [ ] Claimed artifacts/files were verified on disk.
-- [ ] Tests, lint, benchmarks, or manual checks were run or explicitly marked not run.
-- [ ] The final report includes command, evidence, result, and unresolved risks.
+- [ ] `git status` and relevant `git diff` evidence were inspected.
+- [ ] Tests, lint, benchmarks, or manual checks have original output, or are explicitly marked not run.
+- [ ] Remote effects were read back by URL, ID, or state, or are explicitly marked unverified.
+- [ ] The final report includes command, evidence, result, unfinished work, blockers, next step, and unresolved risks.
 - [ ] No secrets or private information appear in shareable output.
 
 ## Minimal One-Shot Example

@@ -13,6 +13,7 @@
   <a href="#-10-秒安装">安装</a> ·
   <a href="#-你可以让它做什么">使用场景</a> ·
   <a href="#-工作原理">工作原理</a> ·
+  <a href="#-为什么更靠谱">可靠性</a> ·
   <a href="#-使用方式">使用方式</a> ·
   <a href="README.md">English</a>
 </p>
@@ -145,6 +146,14 @@ Hermes Code Bridge 给 Hermes 一套更稳的本地 coding-agent 工作流：
 - 📦 收集原始输出、diff、产物和验证结果；
 - ✅ 汇报实际发生了什么，包括失败和不确定性。
 
+## ✅ 为什么更靠谱
+
+- **Session-first 路由：** 同时匹配 repo 工作目录、完整 session ID 或 thread name、角色和历史。`--last` 只表示最近会话，不是默认正确答案。找不到可靠匹配时，使用一次性 run。
+- **证据阶梯：** worker 的 final message 只是线索。继续核验真实产物、`git diff` 和 `git status`、测试命令原始输出；涉及远端副作用时，再 read-back 远端 URL、ID 或状态。
+- **不空等编排：** worker 运行时，Hermes 可以并行做不冲突的 repo 检查、约束核验和证据收集，但不能和 worker 同时编辑同一个工作树。
+- **长任务可追踪：** 有界长任务使用可追踪的后台进程，并在环境支持时启用 completion notification。检查启动失败、最终输出和 exit code；仅有 exit code `0` 不等于任务已完成。
+- **如实收尾：** 明确写出未完成项、已完成部分、阻塞原因和下一步，不用看似合理的结果填补证据空缺。
+
 ---
 
 ## 🧩 支持哪些后端？
@@ -166,15 +175,11 @@ skill 使用的是命令模式，而不是写死某个版本的参数。CLI flag
 ## ⚙️ 工作原理
 
 ```text
-1. 理解用户请求
-2. 识别用户指定的 backend，或在用户允许时选择一个
-3. 检查 repo / session 上下文
-4. 对高风险动作先确认再派发
-5. 为 coding agent 构造结构化 prompt
-6. 调用本地 CLI，或 attach 到已有 tmux/session
-7. 监控直到完成或阻塞
-8. 验证产物、diff 和测试
-9. 带证据向用户汇报
+1. 理解请求、识别 backend，并按 repo cwd、完整 session ID 或 thread name、角色和历史选择可靠 session
+2. 对高风险动作先确认，构造结构化 prompt，再调用真实本地 CLI 或有意使用一次性 run
+3. worker 运行期间，Hermes 并行做不冲突的 repo 检查、约束核验和证据收集
+4. 验证产物、`git diff` / `git status`、命令或测试原始输出；需要时 read-back 远端状态
+5. 带证据汇报结果、未完成项、阻塞原因和下一步
 ```
 
 它不是“随便再起一个 LLM”。核心是归因：用户要 Codex，Hermes 就运行 Codex；用户要 Claude Code，Hermes 就运行 Claude Code。
@@ -254,6 +259,8 @@ Hermes Code Bridge 不替代完整的多 agent workspace 工具。
 CCB（`claude_codex_bridge`）这类工具提供可见的 tmux panes、配置好的 agent slots、worktrees、sidebar 和 agent 间通信。Hermes Code Bridge 更轻量：它告诉 Hermes 怎么驱动本地已经安装好的 coding CLIs。
 
 如果 CCB 可用，Hermes 可以把它当成另一个 bridge backend：读取 CCB config、attach 到 workspace、给正确 pane 发送 prompt，并捕获输出。
+
+默认情况下，Hermes 位于 CCB 外部充当 orchestrator：它调用或 attach 到 CCB workspace，把任务发送给选定的 pane / agent，再读取并核验输出。安装本仓库不会自动让 Hermes 成为 CCB 的 `main-agent`，也不会提供内置 CCB adapter；实际连接仍遵循本机已安装 CCB 的命令和 workspace contract。
 
 ---
 
